@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '2460859':
+
+       18439782669      instructions              #    0.44  insn per cycle         
+       41707934950      cycles                                                      
+         776830193      icache.misses                                               
+
+      30.003906338 seconds time elapsed
+
