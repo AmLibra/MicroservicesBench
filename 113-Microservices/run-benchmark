@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 # Check if sufficient arguments are provided
 if [ "$#" -ne 1 ]; then
@@ -10,14 +10,6 @@ SERVICE="$1"
 SCRIPT_TO_CALL="../measure-process-CPU-performance"
 DIR="output_$SERVICE"
 SIM_TIME=30 # needs to be at least 30 seconds PER PROCESS according to Shanqing!
-
-APPLICATION_DIR=""
-
-if [ "$SERVICE" = "MMS" ]; then
-  APPLICATION_DIR="../DeathStarBench/mediaMicroservices"
-else
-  APPLICATION_DIR="DeathStarBench/socialNetwork"
-fi
 
 if [ ! -d "$DIR" ]; then
     sudo mkdir "$DIR"
