@@ -6,10 +6,10 @@ sudo cpupower frequency-set --min 2.45G
 sudo cpupower frequency-set --max 2.45G
 
 
-SCRIPT_TO_CALL="measure-process-CPU-performance"
+SCRIPT_TO_CALL="../measure-process-CPU-performance"
 DIR="output_MMS"
 SIM_TIME=30 # needs to be at least 30 seconds according to Shanqing!
-APPLICATION_DIR="DeathStarBench/mediaMicroservices"
+APPLICATION_DIR="../DeathStarBench/mediaMicroservices"
 
 
 if [ ! -d "$DIR" ]; then
@@ -65,7 +65,7 @@ fi
 
 docker compose up -d
 
-printf "Generating workload... \n"
+printf "Populating Database... \n"
 sleep 5
 python3 scripts/write_movie_info.py -c datasets/tmdb/casts.json -m datasets/tmdb/movies.json --server_address http://localhost:8080 && scripts/register_users.sh && scripts/register_movies.sh
 cd ../..
@@ -76,9 +76,6 @@ printf "Collecting container PIDs... \n"
 PIDS=$(docker ps -q | xargs -I {} docker inspect --format '{{.State.Pid}}' {})
 PID_COUNT=$(echo "$PIDS" | wc -l)
 DURATION="$((30 * PID_COUNT))s"
-
-#Generate workload 
-DeathStarBench/wrk2/wrk -D exp -t 2 -c 100 -d $DURATION -L -s $APPLICATION_DIR/wrk2/scripts/media-microservices/compose-review.lua http://localhost:8080/wrk2-api/review/compose -R 2000 &
 
 printf "Collecting metrics... \n"
 # Iterate over each PID and call the specified script

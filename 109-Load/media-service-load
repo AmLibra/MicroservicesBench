@@ -1,6 +1,6 @@
 #!/bin/bash 
  
-SIM_TIME=30m # needs to be at least 30 seconds according to Shanqing!
+SIM_TIME=30s # needs to be at least 30 seconds according to Shanqing!
 APPLICATION_DIR="../DeathStarBench/mediaMicroservices"
 
 sleep 5
