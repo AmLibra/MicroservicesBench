@@ -65,14 +65,16 @@ fi
 
 docker compose up -d
 
-printf "Collecting container PIDs... \n"
+cd ../..
+
+
 # Get processes info of all running Docker containers
 PIDS=$(docker ps -q | xargs -I {} docker inspect --format '{{.State.Pid}}' {})
 PID_COUNT=$(echo "$PIDS" | wc -l)
 DURATION="$((30 * PID_COUNT))s"
 
-printf "35 seconds till measurements... \n"
-sleep 35
+printf "40 seconds till metrics collection\n"
+sleep 40 #other machine generates workload 
 
 printf "Collecting metrics... \n"
 # Iterate over each PID and call the specified script
@@ -94,5 +96,3 @@ kernel_percentage=$((total_kernel_time * 100 / total_time))
 
 echo "Total User mode Percentage: $user_percentage%" > user_kernel_mode_MMS.out 
 echo "Total Kernel mode Percentage: $kernel_percentage%" >> user_kernel_mode_MMS.out
-
-python3 aggregate_results.py $DIR results_MMS
