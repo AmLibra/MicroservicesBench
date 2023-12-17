@@ -1,0 +1,16 @@
+#!/bin/bash 
+ 
+SIM_TIME=30s # needs to be at least 30 seconds according to Shanqing!
+APPLICATION_DIR="DeathStarBench/mediaMicroservices"
+
+cd $APPLICATION_DIR
+
+sleep 5
+printf "Generating workload... \n"
+python3 scripts/write_movie_info.py -c datasets/tmdb/casts.json -m datasets/tmdb/movies.json --server_address http://localhost:8080 && scripts/register_users.sh && scripts/register_movies.sh
+cd ../..
+
+#Generate workload 
+DeathStarBench/wrk2/wrk -D exp -t 2 -c 100 -d $SIM_TIME -L -s $APPLICATION_DIR/wrk2/scripts/media-microservices/compose-review.lua http://localhost:8080/wrk2-api/review/compose -R 2000 
+
+printf "End of workload generation. \n"
