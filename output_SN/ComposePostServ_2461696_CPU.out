@@ -1,4 +1,0 @@
-Error:
-The sys_perf_event_open() syscall returned with 3 (No such process) for event (instructions).
-/bin/dmesg | grep -i perf may provide additional information.
-

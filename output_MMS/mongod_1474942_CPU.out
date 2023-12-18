@@ -1,9 +1,0 @@
-
- Performance counter stats for process id '1474942':
-
-         177175965      instructions              #    0.68  insn per cycle         
-         261818010      cycles                                                      
-           1625539      icache.misses                                               
-
-      30.002143744 seconds time elapsed
-

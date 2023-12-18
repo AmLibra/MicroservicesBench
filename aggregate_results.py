@@ -32,7 +32,15 @@ def extract_metrics_from_file(_input_dir, filename, process_map):
         return None
 
     useful_lines = lines[lines.index(pid_line) + 2:]
-    return [process_name, pid, process_map[process_name]] + [line.split()[0] for line in useful_lines[:3]]
+
+    # Process each line and replace commas
+    processed_metrics = []
+    for line in useful_lines[:3]:
+        metric = line.split()[0]
+        metric = metric.replace(',', '')  # Remove commas
+        processed_metrics.append(metric)
+
+    return [process_name, pid, process_map[process_name]] + processed_metrics
 
 
 def aggregate_CPU_metrics(_input_dir, output_file):
@@ -49,30 +57,32 @@ def aggregate_CPU_metrics(_input_dir, output_file):
 
 def aggregate_topdown_metrics(_input_dir, output_file):
     output_file += "_topdown.csv"
-    header = "Process ID, Retiring, Bad Speculation, Frontend Bound, Backend Bound\n"
+    header = "Process Name, Process ID, Retiring, Bad Speculation, Frontend Bound, Backend Bound\n"
     rows = []
 
     for filename in read_files_from_dir(_input_dir, "topdown.out"):
+        print(f"Processing {filename}")
         with open(os.path.join(_input_dir, filename), 'r') as file:
             lines = file.readlines()
+
+        process_name, pid = filename.split('_')[0:2]  # Extracting process name and PID from filename
 
         # Finding the line with process ID
         for i, line in enumerate(lines):
             if "Performance counter stats for process id" in line:
-                pid = line.split("'")[1]  # Extracting the process ID
                 # Assuming the metrics are in the line immediately after the next line
                 metrics_line = lines[i + 3]
                 metrics = metrics_line.split()
                 # Extracting only the required metrics
-                retiring, bad_spec, frontend_bound, backend_bound = metrics[0], metrics[1], metrics[2], metrics[3]
-                # TODO remove this /Done
-                # pid = random.randint(0, 100)
-
-                rows.append([pid, retiring, bad_spec, frontend_bound, backend_bound])
+                try:
+                    retiring, bad_spec, frontend_bound, backend_bound = metrics[0], metrics[1], metrics[2], metrics[3]
+                    rows.append([process_name, pid, retiring, bad_spec, frontend_bound, backend_bound])
+                except IndexError:
+                    print(f"Error: {filename} does not contain topdown metrics")
                 break  # Assuming one set of metrics per file
 
     write_to_csv(output_file, header, rows)
-
+    return output_file
 
 def sort_db(file):
     df = pd.read_csv(file)
@@ -105,23 +115,25 @@ def plot_baton_graph(file):
 
 def plot_baton_graph_topdown(file):
     try:
-        # Reading the CSV file
         df = pd.read_csv(file)
 
         # Convert percentage strings to float
         for col in [' Retiring', ' Bad Speculation', ' Frontend Bound', ' Backend Bound']:
             df[col] = df[col].str.rstrip('%').astype('float') / 100
 
+        # Group by process name
+        df_grouped = df.groupby('Process Name').mean()
+
         # Plotting
         fig, ax = plt.subplots(figsize=(8, 6))
-        colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f']
-        bottom = [0] * len(df)
+        colors = ['#3498db', 'grey', '#2ecc71', '#f1c40f']
+        bottom = [0] * len(df_grouped)
 
         for idx, col in enumerate([' Frontend Bound', ' Bad Speculation', ' Backend Bound', ' Retiring']):
-            ax.bar(df['Process ID'], df[col], bottom=bottom, label=col, color=colors[idx])
-            bottom = [bottom[i] + df[col].iloc[i] for i in range(len(df))]
+            ax.bar(df_grouped.index, df_grouped[col], bottom=bottom, label=col.strip(), color=colors[idx])
+            bottom = [bottom[i] + df_grouped[col].iloc[i] for i in range(len(df_grouped))]
 
-        ax.set_xlabel('Process ID')
+        ax.set_xlabel('Process Name')
         ax.set_ylabel('Metrics')
         ax.set_title('Topdown Metrics Baton Graph')
         plt.xticks(rotation=90)
@@ -133,10 +145,12 @@ def plot_baton_graph_topdown(file):
         print(f"An error occurred: {e}")
 
 
+
 if __name__ == '__main__':
     input_dir, base_output_file = sys.argv[1], sys.argv[2]
     cpu_csv = aggregate_CPU_metrics(input_dir, base_output_file)
     sort_db(cpu_csv)
     plot_baton_graph(cpu_csv)
-    aggregate_topdown_metrics(input_dir, base_output_file)
+    topdown_csv = aggregate_topdown_metrics(input_dir, base_output_file)
+    #sort_db sort_db(topdown_csv)
     plot_baton_graph_topdown(base_output_file + "_topdown.csv")
